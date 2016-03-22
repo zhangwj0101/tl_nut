@@ -567,13 +567,13 @@ def predict():
                                             biasterm=False)
         trainer = bolt.trainer.OVA(sgd)
     #
-    # scores = Parallel(n_jobs=options.n_jobs, verbose=options.verbose)(
+    # score = Parallel(n_jobs=options.n_jobs, verbose=options.verbose)(
     #     delayed(_predict_score)(i, trainer, clone(model), train, test)
     #     for i in range(options.repetition))
     score = _predict_score(6, trainer, clone(model), train, test)
-    print "ACC: %.2f (%.2f)" % (np.mean(score), np.std(score))
+    # print "ACC: %.2f (%.2f)" % (np.mean(score), np.std(score))
     print "ACC NEG_ACC NEG_CALL NEG_F POS_ACC POS_RECALL POS_F"
-    print  score
+    print  score, '\n'
     print "CL-SCL predict OK\n\n"
 
     ##########################################
@@ -581,7 +581,7 @@ def predict():
     lable_index = []
     t_unlabel, _ = load(fname_t_un_data, t_voc, dim, "unlabel")
     norm_unlabel = clscl_model.project(t_unlabel)
-    initNUM = 8000
+    initNUM = 2000
 
     result_path = "_predictScoreUnlabelData_" + str(initNUM)
     trainer.train(model, train, verbose=0, shuffle=False)
@@ -593,10 +593,10 @@ def predict():
         resultList = [line.strip('\n').split(' ') for line in f]
     for result in resultList:
         if float(result[0]) not in lable_index:
-            if float(result[1]) >= 0:
+            if float(result[1]) >= 0.:
                 result_pos.append([float(result[1]), int(result[0])])
             else:
-                result_pos.append([float(result[1]), int(result[0])])
+                result_neg.append([float(result[1]), int(result[0])])
 
     initNUM = int(min(len(result_pos), len(result_neg)))
     print initNUM
@@ -612,19 +612,18 @@ def predict():
             line = line.strip('\n')
             line = line[0:line.rfind(' ')]
             unlabe_data.append(line)
-    confidentUndataPath = "confidentUnlata"
+    confidentUndataPath = "confidentUnlata.txt"
     with open(confidentUndataPath, 'w') as output:
         for i in range(0, initNUM):
             output.write(unlabe_data[result_pos[i][1] - 1] + " #label#:positive\n")
             output.write(unlabe_data[result_neg[i][1] - 1] + " #label#:negative\n")
             lable_index.append(result_pos[i][1])
             lable_index.append(result_neg[i][1])
-
     print "confidentUnlata write ok"
     t_predict_label, _ = load(confidentUndataPath, t_voc, dim, "unlabel")
     tp_label = clscl_model.project(t_predict_label)
 
-    print tp_label
+    print 'tp_label :', tp_label.dim
     epochs = int(math.ceil(10.0 ** 6 / norm_unlabel.n))
     loss = bolt.ModifiedHuber()
     sgd = bolt.SGD(loss, reg, epochs=epochs, norm=2)
@@ -633,13 +632,13 @@ def predict():
     trainer.train(model, tp_label, verbose=0, shuffle=False)
 
     # scores = Parallel(n_jobs=options.n_jobs, verbose=options.verbose)(
-    #     delayed(_predict_score)(i, trainer, clone(model), tp_label, test)
+    #     delayed(_predict_score)(6, trainer, clone(model), tp_label, test)
     #     for i in range(options.repetition))
     score = _predict_score(6, trainer, clone(model), norm_unlabel, test)
-    print "self ACC: %.2f (%.2f)" % (np.mean(score), np.std(score))
+    # print "self ACC: %.2f (%.2f)" % (np.mean(score), np.std(score))
     print "self-CL-SCL predict OK\n\n"
     print "ACC NEG_ACC NEG_CALL NEG_F POS_ACC POS_RECALL POS_F"
-    print  score
+    print  score, '\n'
 
 
 def predictunlable(model, ds, path, topic):
@@ -651,7 +650,6 @@ def predictunlable(model, ds, path, topic):
     for p in model.predict(ds.iterinstances()):
         index = index + 1
         s = str(index) + ' ' + str(p) + '\n'
-        # print s
         f.write(s)
     f.close()
 

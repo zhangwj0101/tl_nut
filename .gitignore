@@ -58,3 +58,5 @@ docs/_build/
 # PyBuilder
 target/
 */.idea
+*/cls-acl10-processed/
+

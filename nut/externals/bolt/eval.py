@@ -80,6 +80,7 @@ def errorrate(model, ds):
 
     errrate = err / n
     acc = 100.0 - errrate * 100.0
+
     neg_acc = neg_neg / (neg_neg + neg_pos)
     neg_recall = neg_neg / (n / 2)
     neg_f = 2 * neg_acc * neg_recall / (neg_acc + neg_recall)
